@@ -1,0 +1,63 @@
+import os
+import random
+from pathlib import Path
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from streetview import search_panoramas, get_panorama
+from PIL import Image
+
+# Load API key
+API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
+if API_KEY is None:
+    raise ValueError("Missing API key. Set GOOGLE_MAPS_API_KEY in your environment.")
+
+# Bounding box
+LAT_MIN, LAT_MAX = 51.500, 51.505
+LON_MIN, LON_MAX = -0.130, -0.120
+
+# Save directory
+SAVE_DIR = Path.home() / "Downloads" / "square_panoramas_london_uk"
+SAVE_DIR.mkdir(parents=True, exist_ok=True)
+
+# Function to download and save one square-cropped panorama
+def download_one_panorama(index):
+    for attempt in range(5): 
+        lat = random.uniform(LAT_MIN, LAT_MAX)
+        lon = random.uniform(LON_MIN, LON_MAX)
+
+        try:
+            panos = search_panoramas(lat=lat, lon=lon)
+            if not panos:
+                continue
+
+            pano_id = panos[0].pano_id
+            image = get_panorama(pano_id=pano_id)
+
+            # Crop center square
+            width, height = image.size
+            side = min(width, height)
+            left = (width - side) // 2
+            top = (height - side) // 2
+            image = image.crop((left, top, left + side, top + side))
+
+            # Resize the image
+            image = image.resize((512, 512))
+
+            # Save image
+            filename = SAVE_DIR / f"square_pano_{index}_{lat:.5f}_{lon:.5f}.jpg"
+            image.save(str(filename), format="JPEG", quality=70)
+
+            return f"[{index}] Saved to: {filename}"
+        except Exception as e:
+            continue
+
+    return f"[{index}] Failed after 5 attempts"
+
+# Download N panoramas in parallel
+def download_batch(n=5): 
+    with ThreadPoolExecutor(max_workers=n) as executor:
+        futures = [executor.submit(download_one_panorama, i + 1) for i in range(n)]
+        for future in as_completed(futures):
+            print(future.result())
+
+if __name__ == "__main__":
+    download_batch(5)
