@@ -18,10 +18,10 @@ This project builds and trains a binary image classifier to distinguish between 
 
 - ✅ Collects real-world panoramas using GPS sampling and the Google Street View API
 - ✅ Preprocesses and compresses images to 224×224 JPEGs
-- ✅ Filters near-duplicate images with spatial indexing and perceptual hashes (developing)
-- ✅ Trains a ResNet-50 classifier using PyTorch and transfer learning (developing)
-- ✅ Visualizes predictions using Grad-CAM heatmaps (developing)
-- ✅ Web front end via Streamlit for uploading and classifying new images (developing)
+- Developing: Filters near-duplicate images with spatial indexing and perceptual hashes 
+- Developing: Trains a ResNet-50 classifier using PyTorch and transfer learning 
+- Developing: Visualizes predictions using Grad-CAM heatmaps 
+- Developing: Web front end via Streamlit for uploading and classifying new images 
 
 ---
 
