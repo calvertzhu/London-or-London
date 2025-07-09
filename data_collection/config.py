@@ -1,8 +1,12 @@
+# data_collection/config.py
+
 import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-### API Keys and Paths
+# ─────────────────────────────────────────────
+# 1. Load API key from .env file in Downloads
+# ─────────────────────────────────────────────
 
 env_path = Path.home() / "Downloads" / "google_maps_API.env"
 if env_path.exists():
@@ -11,21 +15,29 @@ else:
     raise FileNotFoundError(f"API key file not found at: {env_path}")
 
 GOOGLE_MAPS_API_KEY = os.getenv("GOOGLE_MAPS_API_KEY")
-if GOOGLE_MAPS_API_KEY is None:
-    raise ValueError("Missing GOOGLE_MAPS_API_KEY")
+if not GOOGLE_MAPS_API_KEY:
+    raise ValueError("Missing GOOGLE_MAPS_API_KEY in .env file.")
 
-# Base directory paths (relative to project root)
+# ─────────────────────────────────────────────
+# 2. Project Paths
+# ─────────────────────────────────────────────
+
+# Base project root (e.g., ~/London-or-London/)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
+# Data and metadata folders
 DATA_DIR = PROJECT_ROOT / "data"
 METADATA_DIR = PROJECT_ROOT / "metadata"
 
-# Image storage path format
+# Where to save cropped/resized images
 IMAGE_SAVE_PATH = DATA_DIR / "{city}" / "{season}" / "{sharpness}"
 
-# Metadata log file
+# Path to log metadata CSV
 METADATA_CSV_PATH = METADATA_DIR / "combined.csv"
 
-### Bounding Boxes (lat_min, lat_max, lon_min, lon_max)
+# ─────────────────────────────────────────────
+# 3. Bounding Boxes for Each City
+# ─────────────────────────────────────────────
 
 CITY_BOUNDING_BOXES = {
     "london_uk": {
@@ -42,26 +54,23 @@ CITY_BOUNDING_BOXES = {
     },
 }
 
-### Image Processing
+# ─────────────────────────────────────────────
+# 4. Image Processing Config
+# ─────────────────────────────────────────────
 
-CROP_SIZE = 224  # Final image size (square)
-JPEG_QUALITY = 60  # Compression level
+CROP_SIZE = 224             # Final image size (square crop)
+JPEG_QUALITY = 60           # JPEG compression quality (1–100)
+BLUR_THRESHOLD = 100.0      # Laplacian variance threshold for sharp/blurry
 
-# Laplacian threshold to classify sharp vs. blurry
-BLUR_THRESHOLD = 100.0
+# ─────────────────────────────────────────────
+# 5. Data Collection Config
+# ─────────────────────────────────────────────
 
-### xData Collection
+TARGET_IMAGES_PER_CATEGORY = 1250      # 1250 per (city, season, sharpness)
+MIN_SAMPLE_DISTANCE_METERS = 50        # Prevent redundant images
+API_TIMEOUT_SECONDS = 5                # Request timeout (if used)
 
-# Number of images to collect per (city, season, sharpness)
-TARGET_IMAGES_PER_CATEGORY = 500
-
-# Minimum distance (meters) between samples to avoid duplicates
-MIN_SAMPLE_DISTANCE_METERS = 50
-
-# Request timeout or retry settings
-API_TIMEOUT_SECONDS = 5
-
-# Allowed months per season
+# Define month-to-season mapping
 SEASON_MAPPING = {
     "winter": [12, 1, 2],
     "spring": [3, 4, 5],

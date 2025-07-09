@@ -1,26 +1,33 @@
-# sample_coords.py
-
 import random
-from config import CITY_BOUNDING_BOXES
+from data_collection.config import CITY_BOUNDING_BOXES
 
-def sample_coordinate(city_name):
+def sample_nearby_coordinates(city, center_lat=None, center_lon=None, n=5, radius_deg=0.001):
     """
-    Randomly sample a lat/lon within the bounding box of a given city.
+    Sample 'n' GPS coordinates around a center point in a city.
+    If center is not provided, randomly pick one from the bounding box.
 
     Args:
-        city_name (str): 'london_uk' or 'london_on'
+        city (str): 'london_uk' or 'london_on'
+        center_lat (float): Optional center latitude
+        center_lon (float): Optional center longitude
+        n (int): Number of points to sample
+        radius_deg (float): Perturbation radius in degrees
 
     Returns:
-        tuple: (lat, lon)
+        list of (lat, lon) tuples
     """
-    box = CITY_BOUNDING_BOXES[city_name]
-    lat = random.uniform(box["lat_min"], box["lat_max"])
-    lon = random.uniform(box["lon_min"], box["lon_max"])
-    return lat, lon
+    box = CITY_BOUNDING_BOXES[city]
 
-# Example usage
-if __name__ == "__main__":
-    for city in ["london_uk", "london_on"]:
-        for _ in range(3):
-            lat, lon = sample_coordinate(city)
-            print(f"{city.upper()} → lat: {lat:.6f}, lon: {lon:.6f}")
+    if center_lat is None or center_lon is None:
+        center_lat = random.uniform(box["lat_min"], box["lat_max"])
+        center_lon = random.uniform(box["lon_min"], box["lon_max"])
+
+    coords = []
+    for _ in range(n):
+        lat_offset = random.uniform(-radius_deg, radius_deg)
+        lon_offset = random.uniform(-radius_deg, radius_deg)
+        lat = center_lat + lat_offset
+        lon = center_lon + lon_offset
+        coords.append((lat, lon))
+
+    return coords
