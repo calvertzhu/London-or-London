@@ -95,7 +95,7 @@ def split_dataset_incremental(source_dir, output_dir, log_path, split_ratio=(0.7
             })
 
     save_to_log(log_path, new_log_entries)
-    print(f"✅ Added {len(new_log_entries)} new images with unique names and season tracking.")
+    print(f"Added {len(new_log_entries)} new images with unique names and season tracking.")
 
 if __name__ == "__main__":
     split_dataset_incremental(
