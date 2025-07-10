@@ -26,21 +26,31 @@ def crop_and_resize(image, size=CROP_SIZE):
     image_resized = image_cropped.resize((size, size), Image.BICUBIC)
     return image_resized
 
-def save_processed_image(image, city, season, sharpness, pano_id, save_dir):
+def save_processed_image(image, city, season, sharpness, pano_id, lat, lon, date, save_dir):
     """
-    Save the processed image to data/{city}/{season}/{sharpness}/{pano_id}.jpg
+    Save processed image with full metadata in filename:
+    data/{city}/{season}/{sharpness}/{panoid}_{lat}_{lon}_{date}_{season}_{sharpness}.jpg
 
     Args:
-        image (PIL.Image): Processed (cropped + resized) image
+        image (PIL.Image): Processed image
         city (str): 'london_uk' or 'london_on'
         season (str): 'summer', 'fall', etc.
         sharpness (str): 'sharp' or 'blurry'
-        pano_id (str): ID used as filename
+        pano_id (str): Panorama ID
+        lat (float): Latitude of image
+        lon (float): Longitude of image
+        date (str): YYYY-MM
         save_dir (Path): Root path to data/ directory
     """
     target_dir = save_dir / city / season / sharpness
     target_dir.mkdir(parents=True, exist_ok=True)
-    filename = f"{pano_id}.jpg"
+
+    # Format metadata fields for filename
+    lat_str = f"{lat:.5f}".replace('.', 'p')
+    lon_str = f"{lon:.5f}".replace('.', 'p')
+    date_str = date.replace("-", "")  # e.g., 202306
+    filename = f"{pano_id}_{lat_str}_{lon_str}_{date_str}_{season}_{sharpness}.jpg"
+
     save_path = target_dir / filename
 
     try:

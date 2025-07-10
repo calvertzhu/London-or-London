@@ -1,5 +1,3 @@
-# data_collection/test_collect.py
-
 import time
 import sys
 from pathlib import Path
@@ -68,13 +66,13 @@ def collect_images_for_category(city, season, sharpness, target_n=TARGET_PER_CAT
                 }, METADATA_CSV_PATH)
 
                 count += 1
-                print(f"✅ [{count}/{target_n}] Collected: {filename}")
+                print(f"[{count}/{target_n}] Collected: {filename}")
                 if count >= target_n:
                     return
             time.sleep(0.1)
 
     if count < target_n:
-        print(f"⚠️ Not enough samples for {city} / {season} / {sharpness} (got {count})")
+        print(f"Not enough samples for {city} / {season} / {sharpness} (got {count})")
 
 def main():
     test_categories = [
@@ -86,7 +84,7 @@ def main():
     ]
 
     for city, season, sharpness in test_categories:
-        print(f"\n🔄 Collecting: {city} / {season} / {sharpness}")
+        print(f"\nCollecting: {city} / {season} / {sharpness}")
         collect_images_for_category(city, season, sharpness)
 
 if __name__ == "__main__":

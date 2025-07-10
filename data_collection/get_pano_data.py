@@ -25,7 +25,7 @@ def get_all_pano_data(lat, lon, max_panos=10, verbose=True):
         panos = search_panoramas(lat=lat, lon=lon)
     except Exception as e:
         if verbose:
-            print(f"❌ Failed pano search at ({lat}, {lon}): {e}")
+            print(f"Failed pano search at ({lat}, {lon}): {e}")
         return []
 
     pano_results = []
@@ -47,7 +47,7 @@ def get_all_pano_data(lat, lon, max_panos=10, verbose=True):
                 })
         except Exception as e:
             if verbose:
-                print(f"⚠️ Metadata error for {pano.pano_id}: {e}")
+                print(f"Metadata error for {pano.pano_id}: {e}")
         time.sleep(0.1)  # Avoid hitting rate limit
 
     return pano_results
