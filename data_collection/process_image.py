@@ -13,18 +13,37 @@ def crop_and_resize(image, size=CROP_SIZE):
     Returns:
         PIL.Image: Cropped and resized image
     """
-    w, h = image.size
-    min_dim = min(w, h)
-    
-    # Center crop (square from center)
-    left = (w - min_dim) // 2
-    top = (h - min_dim) // 2
-    right = left + min_dim
-    bottom = top + min_dim
+def crop_and_resize(image, size=CROP_SIZE, position="center"):
+    """
+    Crop a horizontal slice of the panorama (left, center, or right) and resize to square.
 
-    image_cropped = image.crop((left, top, right, bottom))
-    image_resized = image_cropped.resize((size, size), Image.BICUBIC)
-    return image_resized
+    Args:
+        image (PIL.Image): Full panoramic image
+        size (int): Output square size (e.g., 224)
+        position (str): 'left', 'center', or 'right'
+
+    Returns:
+        PIL.Image: Processed 224×224 image
+    """
+    w, h = image.size
+
+    # Focus on middle vertical band
+    crop_height = int(h * 0.4)
+    top = int(h * 0.3)
+    bottom = top + crop_height
+
+    # Select horizontal window
+    crop_width = crop_height  # keep square crop
+    if position == "left":
+        left = 0
+    elif position == "right":
+        left = w - crop_width
+    else:  # 'center'
+        left = (w - crop_width) // 2
+    right = left + crop_width
+
+    cropped = image.crop((left, top, right, bottom))
+    return cropped.resize((size, size), Image.BICUBIC)
 
 def save_processed_image(image, city, season, sharpness, pano_id, lat, lon, date, save_dir):
     """

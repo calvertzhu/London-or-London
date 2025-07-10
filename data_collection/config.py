@@ -2,8 +2,7 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
-# Load API Key from .env
-
+# Load API Key
 env_path = Path.home() / "Downloads" / "google_maps_API.env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
@@ -15,7 +14,6 @@ if not GOOGLE_MAPS_API_KEY:
     raise ValueError("Missing GOOGLE_MAPS_API_KEY in .env file.")
 
 # Project Paths
-
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
 DATA_DIR = PROJECT_ROOT / "data"
@@ -26,7 +24,6 @@ METADATA_CSV_PATH = METADATA_DIR / "combined.csv"
 IMAGE_SAVE_PATH = DATA_DIR / "{city}" / "{season}" / "{sharpness}"
 
 # Bounding Boxes for Each City
-
 CITY_BOUNDING_BOXES = {
     "london_uk": {
         "lat_min": 51.28,
@@ -43,13 +40,11 @@ CITY_BOUNDING_BOXES = {
 }
 
 # Image Processing
-
 CROP_SIZE = 224               # Final square crop size
-JPEG_QUALITY = 80             # JPEG compression quality (1–100)
-BLUR_THRESHOLD = 100.0        # Laplacian variance threshold
+JPEG_QUALITY = 100             # JPEG compression quality
+BLUR_THRESHOLD = 50.0        # Laplacian variance threshold
 
 # Data Collection
-
 TARGET_TOTAL_IMAGES = 20000   # Used in full dataset run
 MIN_SAMPLE_DISTANCE_METERS = 50
 API_TIMEOUT_SECONDS = 5

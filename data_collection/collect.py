@@ -40,7 +40,7 @@ def collect():
                         print(f"❌ Skipping {pano_id} (download failed)")
                         continue
 
-                    processed = crop_and_resize(raw_image)
+                    processed = crop_and_resize(raw_image, position="center")
                     season = classify_season(date)
                     sharpness = classify_sharpness(processed)
                     print(f"✅ Classifications → season: {season}, sharpness: {sharpness}")
