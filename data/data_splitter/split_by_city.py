@@ -73,12 +73,22 @@ destRoot = "data/split_data"
 splitRatios = (0.7, 0.15, 0.15)
 
 # The file paths dont read for some reason, need fix :(
-londonOnDirs = [("data/london_on/summer", "london_on", "summer")]
+londonOnDirs = [
+    ("data/london_uk/fall/sharp", "london_on", "fall"),
+    ("data/london_uk/summer/sharp", "london_on", "summer"),
+    ("data/london_uk/winter/sharp", "london_on", "winter")
+    ("data/london_uk/fall/blurry", "london_on", "fall"),
+    ("data/london_uk/summer/blurry", "london_on", "summer"),
+    ("data/london_uk/winter/blurry", "london_on", "winter")
+]
 
 londonUkDirs = [
     ("data/london_uk/fall/sharp", "london_uk", "fall"),
     ("data/london_uk/summer/sharp", "london_uk", "summer"),
     ("data/london_uk/winter/sharp", "london_uk", "winter")
+    ("data/london_uk/fall/blurry", "london_uk", "fall"),
+    ("data/london_uk/summer/blurry", "london_uk", "summer"),
+    ("data/london_uk/winter/blurry", "london_uk", "winter")
 ]
 
 allImages = []
