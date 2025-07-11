@@ -1,49 +1,88 @@
 import pandas as pd
 from pathlib import Path
 import shutil
+from data_collection.config import DATA_DIR, PROJECT_ROOT
 
 def balance_dataset(
-    metadata_path="metadata/combined.csv",
-    output_csv="metadata/balanced_subset.csv",
-    output_dir="data_balanced/",
-    n_per_class=1000,
-    copy_images=True
+    metadata_path=PROJECT_ROOT / "metadata/combined.csv",
+    output_csv=PROJECT_ROOT / "metadata/balanced_subset.csv",
+    output_dir=PROJECT_ROOT / "data_balanced",
+    n_per_class=10,
+    copy_images=True,
+    run_id=None
 ):
-    METADATA_PATH = Path(metadata_path)
-    BALANCED_CSV_PATH = Path(output_csv)
-    BALANCED_IMAGE_DIR = Path(output_dir)
+    metadata_path = Path(metadata_path)
+    output_csv = Path(output_csv)
+    output_dir = Path(output_dir)
 
-    if not METADATA_PATH.exists():
-        print(f"❌ Metadata file not found: {METADATA_PATH}")
+    if not metadata_path.exists():
+        print(f"Metadata file not found: {metadata_path}")
         return
 
-    df = pd.read_csv(METADATA_PATH)
+    df = pd.read_csv(metadata_path)
 
-    # Sample n images per (city, season, sharpness)
-    balanced_df = (
-        df.groupby(["city", "season", "sharpness"])
-          .apply(lambda g: g.sample(n=min(n_per_class, len(g)), random_state=42))
-          .reset_index(drop=True)
-    )
+    if run_id:
+        if "run_id" not in df.columns:
+            print("No 'run_id' column in metadata. Skipping filter.")
+        else:
+            df = df[df["run_id"] == run_id]
+            print(f"Filtering by run_id: {run_id} — {len(df)} rows remain")
 
-    BALANCED_CSV_PATH.parent.mkdir(parents=True, exist_ok=True)
-    balanced_df.to_csv(BALANCED_CSV_PATH, index=False)
-    print(f"✅ Saved balanced metadata to {BALANCED_CSV_PATH}")
+    if "source" not in df.columns:
+        df["source"] = "original"
 
-    # Copy image files to new directory
+    if df.empty:
+        print("No data to balance after filtering.")
+        return
+
+    balanced_rows = []
+    for (city, season, sharpness), group in df.groupby(["city", "season", "sharpness"]):
+        originals = group[group["source"] != "augmented"]
+        augments = group[group["source"] == "augmented"]
+
+        needed = min(n_per_class, len(group))
+        if len(originals) >= needed:
+            sampled = originals.sample(n=needed, random_state=42)
+        else:
+            remaining = needed - len(originals)
+            sampled = pd.concat([
+                originals,
+                augments.sample(n=min(remaining, len(augments)), random_state=42)
+            ])
+
+        print(f"Class {city}-{season}-{sharpness}: {len(sampled)} samples")
+        balanced_rows.append(sampled)
+
+    balanced_df = pd.concat(balanced_rows).reset_index(drop=True)
+    output_csv.parent.mkdir(parents=True, exist_ok=True)
+    balanced_df.to_csv(output_csv, index=False)
+    print(f"\nSaved balanced metadata to {output_csv}")
+
     if copy_images:
+        missing = 0
+        copied = 0
         for row in balanced_df.itertuples(index=False):
-            src = Path("data") / row.city / row.season / row.sharpness / row.filename
-            dst = BALANCED_IMAGE_DIR / row.city / row.season / row.sharpness / row.filename
+            src = DATA_DIR / row.city / row.season / row.sharpness / row.filename
+            dst = output_dir / row.city / row.season / row.sharpness / row.filename
             dst.parent.mkdir(parents=True, exist_ok=True)
+
+            if not src.exists():
+                print(f"Missing file: {src}")
+                missing += 1
+                continue
+
             try:
                 shutil.copy(src, dst)
+                copied += 1
             except Exception as e:
-                print(f"⚠️ Failed to copy {src} → {dst}: {e}")
-        print(f"📁 Copied balanced images to {BALANCED_IMAGE_DIR}")
+                print(f"Copy failed: {src} → {dst} — {e}")
+                missing += 1
 
-    # Print summary
-    print("\n📊 Final sample counts per class:")
+        print(f"\nCopied {copied} images to {output_dir}")
+        if missing:
+            print(f"{missing} images were skipped (missing or failed copy)")
+
+    print("\nFinal sample counts per class:")
     print(balanced_df.groupby(["city", "season", "sharpness"]).size())
 
 if __name__ == "__main__":

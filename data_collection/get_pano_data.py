@@ -2,7 +2,7 @@ from streetview import search_panoramas, get_panorama_meta
 from data_collection.config import GOOGLE_MAPS_API_KEY
 import time
 
-def get_all_pano_data(lat, lon, max_panos=10, verbose=True):
+def get_all_pano_data(lat, lon, max_panos=6, verbose=True):
     """
     Retrieve all available panoramas near a location with pano_id, lat/lon, and date.
     

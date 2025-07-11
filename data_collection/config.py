@@ -26,23 +26,23 @@ IMAGE_SAVE_PATH = DATA_DIR / "{city}" / "{season}" / "{sharpness}"
 # Bounding Boxes for Each City
 CITY_BOUNDING_BOXES = {
     "london_uk": {
-        "lat_min": 51.28,
-        "lat_max": 51.70,
-        "lon_min": -0.51,
-        "lon_max": 0.33,
+        "lat_min": 51.25,   # south (closer to Sutton / Croydon)
+        "lat_max": 51.72,   # north (up to Waltham Cross)
+        "lon_min": -0.55,   # west (Egham, Heathrow)
+        "lon_max": 0.25,    # east (Romford edge)
     },
     "london_on": {
-        "lat_min": 42.85,
-        "lat_max": 43.10,
-        "lon_min": -81.40,
-        "lon_max": -81.15,
+        "lat_min": 42.90,   # includes more of southern outskirts
+        "lat_max": 43.10,   # includes Masonville, edge of Arva
+        "lon_min": -81.45,  # more west toward Komoka
+        "lon_max": -81.10,  # east edge of London, past the airport
     },
 }
 
 # Image Processing
 CROP_SIZE = 224               # Final square crop size
-JPEG_QUALITY = 100             # JPEG compression quality
-BLUR_THRESHOLD = 50.0        # Laplacian variance threshold
+JPEG_QUALITY = 93             # JPEG compression quality
+BLUR_THRESHOLD = 22.0        # Laplacian variance threshold
 
 # Data Collection
 TARGET_TOTAL_IMAGES = 20000   # Used in full dataset run

@@ -1,18 +1,8 @@
 from PIL import Image
 from pathlib import Path
 from data_collection.config import CROP_SIZE, JPEG_QUALITY
+from data_collection.utils import generate_filename
 
-def crop_and_resize(image, size=CROP_SIZE):
-    """
-    Crop the center square of a panorama and resize to target size.
-
-    Args:
-        image (PIL.Image): Full panoramic image (typically very wide)
-        size (int): Output size for both width and height (e.g., 224)
-
-    Returns:
-        PIL.Image: Cropped and resized image
-    """
 def crop_and_resize(image, size=CROP_SIZE, position="center"):
     """
     Crop a horizontal slice of the panorama (left, center, or right) and resize to square.
@@ -65,11 +55,8 @@ def save_processed_image(image, city, season, sharpness, pano_id, lat, lon, date
     target_dir.mkdir(parents=True, exist_ok=True)
 
     # Format metadata fields for filename
-    lat_str = f"{lat:.5f}".replace('.', 'p')
-    lon_str = f"{lon:.5f}".replace('.', 'p')
-    date_str = date.replace("-", "")  # e.g., 202306
-    filename = f"{pano_id}_{lat_str}_{lon_str}_{date_str}_{season}_{sharpness}.jpg"
 
+    filename = generate_filename(pano_id, lat, lon, date, season, sharpness)
     save_path = target_dir / filename
 
     try:
@@ -77,3 +64,5 @@ def save_processed_image(image, city, season, sharpness, pano_id, lat, lon, date
         print(f"Saved processed image to {save_path}")
     except Exception as e:
         print(f"Failed to save image: {e}")
+
+    return filename

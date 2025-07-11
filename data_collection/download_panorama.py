@@ -4,7 +4,7 @@ import io
 
 def download_panorama(pano_id, verbose=True):
     """
-    Download a stitched panorama image given a pano_id, but do NOT save the raw image to disk.
+    Download a stitched panorama image given a pano_id, does not save the raw image to disk.
     
     Args:
         pano_id (str): Google panorama ID
