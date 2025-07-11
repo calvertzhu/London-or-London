@@ -8,7 +8,7 @@ from data_collection.config import DATA_DIR, METADATA_CSV_PATH
 
 # Config
 AUG_SUFFIX = "_aug"
-AUG_PROB = 0.80  # 50% chance for testing — reduce to 0.05 in production
+AUG_PROB = 0.05  # 0.05% augmentation chance
 AUG_SOURCE_LABEL = "augmented"
 
 # Define torchvision augmentation pipeline

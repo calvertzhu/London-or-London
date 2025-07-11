@@ -41,8 +41,8 @@ CITY_BOUNDING_BOXES = {
 
 # Image Processing
 CROP_SIZE = 224               # Final square crop size
-JPEG_QUALITY = 93             # JPEG compression quality
-BLUR_THRESHOLD = 22.0        # Laplacian variance threshold
+JPEG_QUALITY = 94             # JPEG compression quality
+BLUR_THRESHOLD = 20.0        # Laplacian variance threshold
 
 # Data Collection
 TARGET_TOTAL_IMAGES = 20000   # Used in full dataset run
