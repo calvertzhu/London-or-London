@@ -7,7 +7,7 @@ from models.resnet_cbam_mlp import ResNet50_CBAM_MLP
 import matplotlib.pyplot as plt
 
 # Configs
-data_dir = "report_data"  
+data_dir = r"C:\Users\izwa_\OneDrive\Documents\APS360 Project\report_data"
 batch_size = 16
 epochs = 10
 learning_rate = 0.001
@@ -16,34 +16,36 @@ weight_decay = 1e-5
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-# Transforms to match ImageNet pretrained stats
+# Transforms
 transform = transforms.Compose([
     transforms.Resize((224, 224)),
     transforms.ToTensor(),
     transforms.Normalize(mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225])
 ])
 
-# Load datasets explicitly from folders
+# Load train and val datasets from split folders
 train_dataset = datasets.ImageFolder(root=f"{data_dir}/train", transform=transform)
 val_dataset   = datasets.ImageFolder(root=f"{data_dir}/val", transform=transform)
 
 train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
 val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
 
+print(f"Train dataset size: {len(train_dataset)}")
+print(f"Validation dataset size: {len(val_dataset)}")
+
 # Model, loss, optimizer
 model = ResNet50_CBAM_MLP().to(device)
 criterion = nn.BCEWithLogitsLoss()
 optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight_decay)
 
-# Lists for learning curves
+# Learning curves
 train_losses, val_losses = [], []
 train_accs, val_accs = [], []
 
-# Training + validation loop
+# Training loop
 for epoch in range(epochs):
     model.train()
     running_loss, running_corrects = 0.0, 0
-
     for inputs, labels in train_loader:
         inputs, labels = inputs.to(device), labels.float().unsqueeze(1).to(device)
         optimizer.zero_grad()
