@@ -7,7 +7,7 @@ def balance_dataset(
     metadata_path=PROJECT_ROOT / "metadata/combined.csv",
     output_csv=PROJECT_ROOT / "metadata/balanced_subset.csv",
     output_dir=PROJECT_ROOT / "data_balanced",
-    n_per_class=10,
+    n_per_class=5,
     copy_images=True,
     run_id=None
 ):
