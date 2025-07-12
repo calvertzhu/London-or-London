@@ -1,15 +1,18 @@
-# Ignore Python cache
+# === Python cache files ===
 __pycache__/
 *.py[cod]
 
-# Ignore all metadata outputs
+# === Ignore all __pycache__ folders in subdirectories ===
+**/__pycache__/
+
+# === Metadata outputs (auto-generated) ===
 metadata/*.csv
 metadata/*.png
 
-# Ignore OS clutter
+# === OS/system clutter ===
 .DS_Store
 Thumbs.db
 
-# Optional: Editor settings
+# === Editor/project files (optional) ===
 .vscode/
 .idea/
