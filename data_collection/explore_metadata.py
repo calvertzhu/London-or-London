@@ -15,7 +15,7 @@ def analyze_metadata():
 
     print("\nTotal images:", len(df))
 
-    # Basic stats
+    # Basic stats4
     print("\nBy city:")
     print(df["city"].value_counts())
 
@@ -51,6 +51,22 @@ def analyze_metadata():
     plt.savefig("metadata/plot_city_season_sharpness.png")
     print("Saved plot: metadata/plot_city_season_sharpness.png")
     plt.close()
+
+    # Separate histograms for each city
+    cities = df["city"].unique()
+    for city in cities:
+        city_df = df[df["city"] == city]
+
+        plt.figure(figsize=(10, 6))
+        sns.countplot(data=city_df, x="season", hue="sharpness", palette="Set2")
+        plt.title(f"Season vs Sharpness for {city}")
+        plt.xlabel("Season")
+        plt.ylabel("Count")
+        plt.tight_layout()
+        output_path = f"metadata/histogram_{city}.png"
+        plt.savefig(output_path)
+        print(f"Saved plot: {output_path}")
+        plt.close()
 
 if __name__ == "__main__":
     analyze_metadata()

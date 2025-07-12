@@ -11,7 +11,7 @@ AUG_SUFFIX = "_aug"
 AUG_PROB = 0.05  # 0.05% augmentation chance
 AUG_SOURCE_LABEL = "augmented"
 
-# Define torchvision augmentation pipeline
+# Torchvision augmentation
 torch_augment = T.Compose([
     T.RandomApply([T.GaussianBlur(kernel_size=5)], p=0.5),
     T.RandomApply([T.ColorJitter(brightness=0.3, contrast=0.3)], p=0.6),
@@ -19,59 +19,56 @@ torch_augment = T.Compose([
 ])
 
 def augment_dataset(run_id=None):
-    if not DATA_DIR.exists():
-        print(f"Data directory not found: {DATA_DIR}")
-        return
     if not METADATA_CSV_PATH.exists():
         print(f"Metadata file not found: {METADATA_CSV_PATH}")
         return
 
     df = pd.read_csv(METADATA_CSV_PATH)
+
+    if run_id:
+        if "run_id" not in df.columns:
+            print("No 'run_id' column in metadata. Cannot filter.")
+            return
+        df = df[df["run_id"] == run_id]
+        print(f"Filtering metadata by run_id={run_id}: {len(df)} rows to augment.")
+
     new_rows = []
     skipped = 0
 
-    for image_path in DATA_DIR.rglob("*.jpg"):
-        if AUG_SUFFIX in image_path.stem:
-            continue  # Skip already augmented
+    for _, row in df.iterrows():
+        if AUG_SUFFIX in row["filename"]:
+            continue  # Already augmented
 
         if random.random() >= AUG_PROB:
             skipped += 1
-            continue  # Skip based on chance
+            continue
 
         try:
-            image = Image.open(image_path).convert("RGB")
+            city, season, sharpness = row["city"], row["season"], row["sharpness"]
+            src_path = DATA_DIR / city / season / sharpness / row["filename"]
+
+            if not src_path.exists():
+                print(f"Missing source image: {src_path}")
+                continue
+
+            image = Image.open(src_path).convert("RGB")
             image_aug = torch_augment(image)
 
-            # Generate unique augmented filename
-            folder = image_path.parent
-            base = image_path.stem
-            ext = image_path.suffix
+            # Generate unique filename
+            base = src_path.stem
+            ext = src_path.suffix
             i = 1
             while True:
                 aug_filename = f"{base}{AUG_SUFFIX}{i}{ext}"
-                aug_path = folder / aug_filename
+                aug_path = src_path.parent / aug_filename
                 if not aug_path.exists():
                     break
                 i += 1
 
             image_aug.save(aug_path)
-            print(f"Augmented: {image_path.name} → {aug_path.name}")
+            print(f"Augmented: {row['filename']} → {aug_filename}")
 
-            # Extract pano_id from filename
-            parts = base.split("_")
-            if len(parts) < 6:
-                print(f"Unexpected filename format: {base}")
-                continue
-
-            pano_id = parts[0]
-            matches = df[df["pano_id"].astype(str).str.strip() == pano_id.strip()]
-
-            if matches.empty:
-                print(f"No metadata found for {image_path.name} (pano_id={pano_id})")
-                continue
-
-            # Append augmented metadata row
-            row_data = matches.iloc[0].to_dict()
+            row_data = row.to_dict()
             row_data["filename"] = aug_filename
             row_data["source"] = AUG_SOURCE_LABEL
             if run_id:
@@ -79,11 +76,11 @@ def augment_dataset(run_id=None):
             new_rows.append(row_data)
 
         except Exception as e:
-            print(f"Error processing {image_path.name}: {e}")
+            print(f"Error augmenting {row['filename']}: {e}")
 
     if new_rows:
         df_aug = pd.DataFrame(new_rows)
-        df_combined = pd.concat([df, df_aug], ignore_index=True)
+        df_combined = pd.concat([pd.read_csv(METADATA_CSV_PATH), df_aug], ignore_index=True)
         df_combined.to_csv(METADATA_CSV_PATH, index=False)
         print(f"\nAppended {len(new_rows)} augmented rows to {METADATA_CSV_PATH}")
     else:
