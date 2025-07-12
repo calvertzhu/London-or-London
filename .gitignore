@@ -1,0 +1,15 @@
+# Ignore Python cache
+__pycache__/
+*.py[cod]
+
+# Ignore all metadata outputs
+metadata/*.csv
+metadata/*.png
+
+# Ignore OS clutter
+.DS_Store
+Thumbs.db
+
+# Optional: Editor settings
+.vscode/
+.idea/
