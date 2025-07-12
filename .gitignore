@@ -16,3 +16,6 @@ Thumbs.db
 # === Editor/project files (optional) ===
 .vscode/
 .idea/
+
+
+google_maps_API.env
