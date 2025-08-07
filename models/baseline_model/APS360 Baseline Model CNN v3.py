@@ -1,52 +1,61 @@
 import os
 import numpy as np
 import matplotlib.pyplot as plt
-from tensorflow.keras.preprocessing.image import ImageDataGenerator
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+import tensorflow as tf
+from keras import layers, models
+from keras.preprocessing import image_dataset_from_directory
 
 
 # This should contain two subfolders, "train" and "val", each of which
 # has one folder per class (e.g. "London_ON", "London_UK").
-# If inconvinient - message on discord for hotfix
-data_dir = 'path/to/your/data_folder'
+data_dir = 'report_data'
 
-# Create Generators ----------------------------
-train_datagen = ImageDataGenerator(
-    rescale=1./255,
-    rotation_range=20,
-    width_shift_range=0.1,
-    height_shift_range=0.1,
-    horizontal_flip=True
-)
-val_datagen = ImageDataGenerator(rescale=1./255)
-
-train_gen = train_datagen.flow_from_directory(
+# Create Datasets ----------------------------
+train_ds = image_dataset_from_directory(
     os.path.join(data_dir, 'train'),
-    target_size=(224, 224),
+    validation_split=None,
+    subset=None,
+    seed=123,
+    image_size=(224, 224),
     batch_size=32,
-    class_mode='binary'
+    label_mode='binary'
 )
-val_gen = val_datagen.flow_from_directory(
+
+val_ds = image_dataset_from_directory(
     os.path.join(data_dir, 'val'),
-    target_size=(224, 224),
+    validation_split=None,
+    subset=None,
+    seed=123,
+    image_size=(224, 224),
     batch_size=32,
-    class_mode='binary'
+    label_mode='binary'
 )
+
+# Data augmentation
+data_augmentation = tf.keras.Sequential([
+    layers.RandomFlip("horizontal"),
+    layers.RandomRotation(0.1),
+    layers.RandomZoom(0.1),
+    layers.RandomTranslation(0.1, 0.1),  # Width/height shift
+])
+
+# Apply augmentation and rescaling to training data
+train_ds = train_ds.map(lambda x, y: (data_augmentation(x, training=True) / 255.0, y))
+val_ds = val_ds.map(lambda x, y: (x / 255.0, y))  # Rescale validation data too
 
 # Model definition -------------------------------------------------
-model = Sequential([
-    Conv2D(32, (3,3), activation='relu', input_shape=(224,224,3)),
-    MaxPooling2D((2,2)),
+model = models.Sequential([
+    layers.Conv2D(32, (3,3), activation='relu', input_shape=(224,224,3)),
+    layers.MaxPooling2D((2,2)),
 
-    Conv2D(64, (3,3), activation='relu'),
-    MaxPooling2D((2,2)),
+    layers.Conv2D(64, (3,3), activation='relu'),
+    layers.MaxPooling2D((2,2)),
 
-    Flatten(),
-    Dense(64, activation='relu'),
-    Dropout(0.5),
+    layers.Flatten(),
+    layers.Dense(64, activation='relu'),
+    layers.Dropout(0.5),
 
-    Dense(1, activation='sigmoid')
+    layers.Dense(1, activation='sigmoid')
 ])
 
 model.compile(
@@ -58,10 +67,8 @@ model.compile(
 # Train ----------------------------
 epochs = 15
 history = model.fit(
-    train_gen,
-    steps_per_epoch=train_gen.samples // train_gen.batch_size,
-    validation_data=val_gen,
-    validation_steps=val_gen.samples // val_gen.batch_size,
+    train_ds,
+    validation_data=val_ds,
     epochs=epochs
 )
 

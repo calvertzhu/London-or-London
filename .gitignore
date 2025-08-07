@@ -19,3 +19,6 @@ Thumbs.db
 
 
 google_maps_API.env
+
+# === Virtual environments ===
+aps360env/
