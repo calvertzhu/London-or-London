@@ -23,14 +23,18 @@ def augment_dataset(run_id=None):
         print(f"Metadata file not found: {METADATA_CSV_PATH}")
         return
 
-    df = pd.read_csv(METADATA_CSV_PATH)
-
+    # Read full metadata once
+    full_df = pd.read_csv(METADATA_CSV_PATH)
+    
+    # Get data to augment
     if run_id:
-        if "run_id" not in df.columns:
+        if "run_id" not in full_df.columns:
             print("No 'run_id' column in metadata. Cannot filter.")
             return
-        df = df[df["run_id"] == run_id]
+        df = full_df[full_df["run_id"] == run_id]
         print(f"Filtering metadata by run_id={run_id}: {len(df)} rows to augment.")
+    else:
+        df = full_df
 
     new_rows = []
     skipped = 0
@@ -79,8 +83,20 @@ def augment_dataset(run_id=None):
             print(f"Error augmenting {row['filename']}: {e}")
 
     if new_rows:
+        # Create DataFrame with new augmented rows
         df_aug = pd.DataFrame(new_rows)
-        df_combined = pd.concat([pd.read_csv(METADATA_CSV_PATH), df_aug], ignore_index=True)
+        
+        if run_id:
+            # If run_id specified, keep other runs unchanged
+            df_combined = pd.concat([
+                full_df[full_df["run_id"] != run_id],  # Keep other runs unchanged
+                df,  # Keep original data from this run
+                df_aug  # Add new augmented data
+            ], ignore_index=True)
+        else:
+            # If no run_id, append all augmented data
+            df_combined = pd.concat([full_df, df_aug], ignore_index=True)
+            
         df_combined.to_csv(METADATA_CSV_PATH, index=False)
         print(f"\nAppended {len(new_rows)} augmented rows to {METADATA_CSV_PATH}")
     else:
