@@ -1,0 +1,35 @@
+# Core ML/DL Libraries
+torch>=2.0.0
+torchvision>=0.15.0
+numpy>=1.21.0
+pandas>=1.3.0
+
+# Image Processing
+Pillow>=8.3.0
+opencv-python>=4.5.0
+
+# Data Collection & API
+requests>=2.25.0
+google-streetview>=1.2.9
+python-dotenv>=0.19.0
+
+# Visualization
+matplotlib>=3.4.0
+seaborn>=0.11.0
+
+# Web App
+streamlit>=1.28.0
+
+# Machine Learning
+scikit-learn>=1.0.0
+
+# Utilities
+pathlib2>=2.3.0
+tqdm>=4.62.0
+
+# Optional: GPU support (uncomment if using CUDA)
+# torch-cuda>=2.0.0
+
+# Development (optional)
+jupyter>=1.0.0
+ipykernel>=6.0.0 

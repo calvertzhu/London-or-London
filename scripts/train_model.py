@@ -3,7 +3,7 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from models.resnet_cbam_mlp import ResNet50_CBAM_MLP
+from models.primary_model.resnet_cbam_mlp import ResNet50_CBAM_MLP
 import matplotlib.pyplot as plt
 
 # Configs
@@ -93,6 +93,18 @@ plt.title('Loss Curve')
 plt.legend()
 plt.savefig("loss_curve.png")
 plt.close()
+
+# Save the trained model
+torch.save({
+    'epoch': epochs,
+    'model_state_dict': model.state_dict(),
+    'optimizer_state_dict': optimizer.state_dict(),
+    'train_losses': train_losses,
+    'val_losses': val_losses,
+    'train_accs': train_accs,
+    'val_accs': val_accs,
+}, 'trained_model.pth')
+print("Model saved to trained_model.pth")
 
 # Plot accuracy curve
 plt.figure(figsize=(8,5))

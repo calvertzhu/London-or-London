@@ -17,7 +17,7 @@ Thumbs.db
 .vscode/
 .idea/
 
-
+# === Google Maps API key ===
 google_maps_API.env
 
 # === Virtual environments ===

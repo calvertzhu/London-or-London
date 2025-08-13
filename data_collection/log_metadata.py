@@ -16,7 +16,7 @@ def log_metadata(entry: dict, csv_path: Path):
     # Updated fieldnames to include all known metadata keys
     fieldnames = [
         "filename", "city", "lat", "lon", "date",
-        "season", "sharpness", "pano_id", "run_id", "source"
+        "season", "sharpness", "pano_id", "run_id", "source", "test_type"
     ]
 
     # Fill missing optional fields with empty string if necessary

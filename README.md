@@ -27,10 +27,66 @@ This project builds and trains a binary image classifier to distinguish between 
 
 ## 📦 Installation
 
-bash
+### Quick Setup
+```bash
 git clone https://github.com/calvertzhu/london-vs-london.git
 cd london-vs-london
+./setup.sh
+```
+
+### Manual Setup
+```bash
+# Create virtual environment
+python3 -m venv aps360env
+source aps360env/bin/activate
+
+# Install dependencies
 pip install -r requirements.txt
 
-You'll also need to export your Google Maps API key:
-export GOOGLE_MAPS_API_KEY="your_api_key_here"
+# Or for minimal installation:
+pip install -r requirements-minimal.txt
+```
+
+### API Key Setup
+Create a `google_maps_API.env` file in the project root:
+```bash
+echo "GOOGLE_MAPS_API_KEY=your_api_key_here" > google_maps_API.env
+```
+
+### Dependencies
+- **Core ML**: PyTorch, TorchVision, NumPy, Pandas
+- **Image Processing**: Pillow, OpenCV
+- **Data Collection**: Google Street View API, Requests
+- **Visualization**: Matplotlib, Seaborn
+
+## 🚀 Usage
+
+### Data Collection
+```bash
+# Collect test data
+cd data_collection
+python3 test_data_collector.py --mode comprehensive --city both --winter 50 --outside 50
+
+# Analyze existing data
+python3 analyze_test_needs.py
+```
+
+### Training
+```bash
+# Split data for training
+python3 scripts/data_splitter.py
+
+# Train the model
+python3 scripts/train_model.py
+```
+
+### Project Structure
+```
+├── data_collection/     # Data collection scripts
+├── data/               # Training data
+├── test_data/          # Test data
+├── models/             # Model architectures
+├── scripts/            # Training and evaluation scripts
+├── report_data/        # Split train/val data
+└── metadata/           # Data metadata and analysis
+```
