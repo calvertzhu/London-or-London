@@ -2,8 +2,11 @@ import os
 from pathlib import Path
 from dotenv import load_dotenv
 
+# Project Root
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+
 # Load API Key
-env_path = Path.home() / "Downloads" / "google_maps_API.env"
+env_path = PROJECT_ROOT / "google_maps_API.env"
 if env_path.exists():
     load_dotenv(dotenv_path=env_path)
 else:
@@ -14,8 +17,6 @@ if not GOOGLE_MAPS_API_KEY:
     raise ValueError("Missing GOOGLE_MAPS_API_KEY in .env file.")
 
 # Project Paths
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-
 DATA_DIR = PROJECT_ROOT / "data"
 METADATA_DIR = PROJECT_ROOT / "metadata"
 METADATA_CSV_PATH = METADATA_DIR / "combined.csv"
