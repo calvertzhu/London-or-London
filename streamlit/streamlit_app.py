@@ -22,7 +22,7 @@ from models.primary_model.resnet_cbam_mlp import ResNet50_CBAM_MLP
 # Page config
 st.set_page_config(
     page_title="London vs London Classifier",
-    page_icon="🌍",
+    page_icon="",
     layout="wide"
 )
 
@@ -73,7 +73,7 @@ def predict_image(model, image_tensor, device):
 
 def main():
     # Header
-    st.title("🌍 London vs London City Classifier")
+    st.title("London vs London City Classifier")
     st.markdown("Upload a street view image to classify whether it's from **London, UK** or **London, Ontario, Canada**")
     
     # Load model
