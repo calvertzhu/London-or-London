@@ -103,7 +103,7 @@ def main():
     ])
     
     # Load test data
-    test_data_dir = "../test_data"
+    test_data_dir = "test_data"
     if not os.path.exists(test_data_dir):
         print(f"Test data directory not found: {test_data_dir}")
         print("Please collect test data first using test_data_collector.py")
@@ -116,8 +116,19 @@ def main():
     print(f"Test dataset size: {len(test_dataset)}")
     print(f"Classes: {test_dataset.classes}")
     
-    # Load model
-    model_path = "trained_model.pth"
+    # Load model (try best model first, then fallback to trained model)
+    model_path = "best_model.pth"
+    if not os.path.exists(model_path):
+        model_path = "trained_model.pth"
+        if not os.path.exists(model_path):
+            print(f"No model found at best_model.pth or trained_model.pth")
+            print("Please train the model first using train_model.py")
+            return
+        else:
+            print(f"Using trained_model.pth (best model not found)")
+    else:
+        print(f"Using best_model.pth")
+    
     model = load_model(model_path, device)
     
     # Evaluate model

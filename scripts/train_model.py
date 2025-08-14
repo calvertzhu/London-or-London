@@ -3,11 +3,16 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-from models.primary_model.resnet_cbam_mlp import ResNet50_CBAM_MLP
 import matplotlib.pyplot as plt
+import sys
+from pathlib import Path
+
+# Add project root to path for imports
+sys.path.append(str(Path(__file__).parent.parent))
+from models.primary_model.resnet_cbam_mlp import ResNet50_CBAM_MLP
 
 # Configs
-data_dir = r"C:\Users\izwa_\OneDrive\Documents\APS360 Project\report_data"
+data_dir = "report_data"
 batch_size = 16
 epochs = 10
 learning_rate = 0.001
@@ -41,6 +46,10 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight
 # Learning curves
 train_losses, val_losses = [], []
 train_accs, val_accs = [], []
+
+# Best model tracking
+best_val_acc = 0.0
+best_model_state = None
 
 # Training loop
 for epoch in range(epochs):
@@ -81,9 +90,18 @@ for epoch in range(epochs):
     val_losses.append(val_epoch_loss)
     val_accs.append(val_epoch_acc.item())
 
-    print(f"Epoch {epoch+1}/{epochs}: "
-          f"Train Loss={epoch_loss:.4f}, Acc={epoch_acc:.4f} | "
-          f"Val Loss={val_epoch_loss:.4f}, Acc={val_epoch_acc:.4f}")
+    # Save best model based on validation accuracy
+    if val_epoch_acc > best_val_acc:
+        best_val_acc = val_epoch_acc
+        best_model_state = model.state_dict().copy()
+        print(f"Epoch {epoch+1}/{epochs}: "
+              f"Train Loss={epoch_loss:.4f}, Acc={epoch_acc:.4f} | "
+              f"Val Loss={val_epoch_loss:.4f}, Acc={val_epoch_acc:.4f} "
+              f"*** NEW BEST MODEL ***")
+    else:
+        print(f"Epoch {epoch+1}/{epochs}: "
+              f"Train Loss={epoch_loss:.4f}, Acc={epoch_acc:.4f} | "
+              f"Val Loss={val_epoch_loss:.4f}, Acc={val_epoch_acc:.4f}")
 
 # Plot loss curve
 plt.figure(figsize=(8,5))
@@ -96,17 +114,31 @@ plt.legend()
 plt.savefig("loss_curve.png")
 plt.close()
 
-# Save the trained model
-torch.save({
-    'epoch': epochs,
-    'model_state_dict': model.state_dict(),
-    'optimizer_state_dict': optimizer.state_dict(),
-    'train_losses': train_losses,
-    'val_losses': val_losses,
-    'train_accs': train_accs,
-    'val_accs': val_accs,
-}, 'trained_model.pth')
-print("Model saved to trained_model.pth")
+# Save the best model (based on validation accuracy)
+if best_model_state is not None:
+    torch.save({
+        'epoch': epochs,
+        'model_state_dict': best_model_state,
+        'optimizer_state_dict': optimizer.state_dict(),
+        'train_losses': train_losses,
+        'val_losses': val_losses,
+        'train_accs': train_accs,
+        'val_accs': val_accs,
+        'best_val_acc': best_val_acc,
+    }, 'best_model.pth')
+    print(f"Best model saved to best_model.pth (Val Acc: {best_val_acc:.4f})")
+else:
+    # Fallback: save the last model if no best model was found
+    torch.save({
+        'epoch': epochs,
+        'model_state_dict': model.state_dict(),
+        'optimizer_state_dict': optimizer.state_dict(),
+        'train_losses': train_losses,
+        'val_losses': val_losses,
+        'train_accs': train_accs,
+        'val_accs': val_accs,
+    }, 'trained_model.pth')
+    print("Last model saved to trained_model.pth")
 
 # Plot accuracy curve
 plt.figure(figsize=(8,5))

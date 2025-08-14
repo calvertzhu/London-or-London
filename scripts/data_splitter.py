@@ -19,7 +19,7 @@ def copy_images(images, split, city):
 # Setup directories
 source_dir = Path("data")
 target_dir = Path("report_data")
-train_ratio = 0.7
+train_ratio = 0.8
 
 # Print initial counts
 print_all_files("data/london_on")
