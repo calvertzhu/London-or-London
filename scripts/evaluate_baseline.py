@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """
-Model Evaluation Script
+Baseline Model Evaluation Script
 
-Evaluates trained model on test data and generates performance metrics.
+Evaluates trained baseline model on test data and generates performance metrics.
 """
 
 import torch
@@ -19,16 +19,16 @@ import sys
 
 # Add project root to path for imports
 sys.path.append(str(Path(__file__).parent.parent))
-from models.primary_model.resnet_cbam_mlp import ResNet50_CBAM_MLP
+from models.baseline_model.baseline_cnn import BaselineCNN
 
 def load_model(model_path, device):
     """Load trained model from checkpoint."""
-    model = ResNet50_CBAM_MLP().to(device)
+    model = BaselineCNN().to(device)
     
     if os.path.exists(model_path):
         checkpoint = torch.load(model_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
-        print(f"Loaded model from {model_path}")
+        print(f"Loaded baseline model from {model_path}")
     else:
         print(f"Model not found at {model_path}, using untrained model")
     
@@ -54,7 +54,7 @@ def evaluate_model(model, test_loader, device):
     
     return np.array(all_predictions), np.array(all_labels), np.array(all_probabilities)
 
-def plot_confusion_matrix(y_true, y_pred, save_path="confusion_matrix.png"):
+def plot_confusion_matrix(y_true, y_pred, save_path="baseline_confusion_matrix.png"):
     """Plot and save confusion matrix."""
     cm = confusion_matrix(y_true, y_pred)
     
@@ -62,14 +62,14 @@ def plot_confusion_matrix(y_true, y_pred, save_path="confusion_matrix.png"):
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues', 
                 xticklabels=['London_ON', 'London_UK'],
                 yticklabels=['London_ON', 'London_UK'])
-    plt.title('Confusion Matrix')
+    plt.title('Baseline Model - Confusion Matrix')
     plt.ylabel('True Label')
     plt.xlabel('Predicted Label')
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Confusion matrix saved to {save_path}")
 
-def plot_roc_curve(y_true, y_prob, save_path="roc_curve.png"):
+def plot_roc_curve(y_true, y_prob, save_path="baseline_roc_curve.png"):
     """Plot and save ROC curve."""
     from sklearn.metrics import roc_curve, auc
     
@@ -84,7 +84,7 @@ def plot_roc_curve(y_true, y_prob, save_path="roc_curve.png"):
     plt.ylim([0.0, 1.05])
     plt.xlabel('False Positive Rate')
     plt.ylabel('True Positive Rate')
-    plt.title('Receiver Operating Characteristic (ROC) Curve')
+    plt.title('Baseline Model - Receiver Operating Characteristic (ROC) Curve')
     plt.legend(loc="lower right")
     plt.savefig(save_path, dpi=300, bbox_inches='tight')
     plt.close()
@@ -99,7 +99,7 @@ def main():
     transform = transforms.Compose([
         transforms.Resize((224, 224)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225])
+        # Note: No normalization here as the model handles it internally
     ])
     
     # Load test data
@@ -111,32 +111,28 @@ def main():
     
     # Create test dataset
     test_dataset = datasets.ImageFolder(root=test_data_dir, transform=transform)
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, drop_last=False)
+    test_loader = DataLoader(test_dataset, batch_size=32, shuffle=False, drop_last=False)
     
     print(f"Test dataset size: {len(test_dataset)}")
     print(f"Classes: {test_dataset.classes}")
     
     # Load model (try best model first, then fallback to trained model)
-    model_path = "models/saved_models/best_model.pth"
+    model_path = "baseline_best_model.pth"
     if not os.path.exists(model_path):
-        model_path = "best_model.pth"
+        model_path = "baseline_trained_model.pth"
         if not os.path.exists(model_path):
-            model_path = "trained_model.pth"
-            if not os.path.exists(model_path):
-                print(f"No model found at models/saved_models/best_model.pth, best_model.pth, or trained_model.pth")
-                print("Please train the model first using train_model.py")
-                return
-            else:
-                print(f"Using trained_model.pth (best model not found)")
+            print(f"No baseline model found at baseline_best_model.pth or baseline_trained_model.pth")
+            print("Please train the baseline model first using train_baseline.py")
+            return
         else:
-            print(f"Using best_model.pth")
+            print(f"Using baseline_trained_model.pth (best model not found)")
     else:
-        print(f"Using models/saved_models/best_model.pth")
+        print(f"Using baseline_best_model.pth")
     
     model = load_model(model_path, device)
     
     # Evaluate model
-    print("Evaluating model...")
+    print("Evaluating baseline model...")
     predictions, true_labels, probabilities = evaluate_model(model, test_loader, device)
     
     # Calculate metrics
@@ -151,7 +147,7 @@ def main():
     precision_macro = precision_score(true_labels, predictions, average='macro')
     recall_macro = recall_score(true_labels, predictions, average='macro')
     
-    print(f"\n=== MODEL PERFORMANCE METRICS ===")
+    print(f"\nBASELINE MODEL PERFORMANCE METRICS")
     print(f"Overall Accuracy: {accuracy:.4f}")
     print(f"Macro F1 Score: {f1_macro:.4f}")
     print(f"Weighted F1 Score: {f1_weighted:.4f}")
@@ -163,13 +159,32 @@ def main():
     print(f"  London_UK: {f1_per_class[1]:.4f}")
     
     # Classification report
-    print("\n=== DETAILED CLASSIFICATION REPORT ===")
+    print("\nDETAILED CLASSIFICATION REPORT")
     print(classification_report(true_labels, predictions, 
                               target_names=['London_ON', 'London_UK']))
     
     # Plot results
     plot_confusion_matrix(true_labels, predictions)
     plot_roc_curve(true_labels, probabilities)
+    
+    # Create metrics summary plot
+    metrics_names = ['Accuracy', 'Macro F1', 'Weighted F1', 'Macro Precision', 'Macro Recall']
+    metrics_values = [accuracy, f1_macro, f1_weighted, precision_macro, recall_macro]
+    
+    plt.figure(figsize=(10, 6))
+    bars = plt.bar(metrics_names, metrics_values, color=['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#8B4513'])
+    plt.title('Baseline Model Performance Metrics', fontsize=14, fontweight='bold')
+    plt.ylabel('Score', fontsize=12)
+    plt.ylim(0, 1)
+    
+    # Add value labels on bars
+    for bar, value in zip(bars, metrics_values):
+        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01, 
+                f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
+    
+    plt.tight_layout()
+    plt.savefig("baseline_performance_metrics.png", dpi=300, bbox_inches='tight')
+    plt.close()
     
     # Save results
     results = {
@@ -184,29 +199,11 @@ def main():
         'probabilities': probabilities
     }
     
-    np.save('evaluation_results.npy', results)
+    np.save('baseline_evaluation_results.npy', results)
     
-    # Create metrics summary plot
-    metrics_names = ['Accuracy', 'Macro F1', 'Weighted F1', 'Macro Precision', 'Macro Recall']
-    metrics_values = [accuracy, f1_macro, f1_weighted, precision_macro, recall_macro]
-    
-    plt.figure(figsize=(10, 6))
-    bars = plt.bar(metrics_names, metrics_values, color=['#2E86AB', '#A23B72', '#F18F01', '#C73E1D', '#8B4513'])
-    plt.title('Model Performance Metrics', fontsize=14, fontweight='bold')
-    plt.ylabel('Score', fontsize=12)
-    plt.ylim(0, 1)
-    
-    # Add value labels on bars
-    for bar, value in zip(bars, metrics_values):
-        plt.text(bar.get_x() + bar.get_width()/2, bar.get_height() + 0.01, 
-                f'{value:.3f}', ha='center', va='bottom', fontweight='bold')
-    
-    plt.tight_layout()
-    plt.savefig("performance_metrics.png", dpi=300, bbox_inches='tight')
-    plt.close()
-    
-    print("\nEvaluation complete! Results saved to evaluation_results.npy")
-    print("Performance metrics plot saved to performance_metrics.png")
+    print("\nBaseline model evaluation complete!")
+    print("Results saved to baseline_evaluation_results.npy")
+    print("Performance metrics plot saved to baseline_performance_metrics.png")
 
 if __name__ == "__main__":
     main() 
