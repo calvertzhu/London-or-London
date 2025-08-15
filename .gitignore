@@ -51,3 +51,22 @@ baseline_performance_metrics.png
 evaluation_results.npy
 baseline_evaluation_results.npy
 models/saved_models/*.pth
+
+# Model files
+*.pth
+*.h5
+*.pkl
+*.joblib
+*.pt
+*.onnx
+*.tflite
+*.pb
+*.savedmodel
+
+# Checkpoints
+checkpoints/
+checkpoints_baseline/
+
+# Virtual environments
+aps360env/
+
