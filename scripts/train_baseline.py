@@ -16,8 +16,8 @@ from models.baseline_model.baseline_cnn import BaselineCNN
 data_dir = "report_data"
 test_data_dir = "test_data"
 batch_size = 32  # Larger batch size for baseline model
-epochs = 15
-learning_rate = 0.001
+epochs = 30
+learning_rate = 0.0001
 weight_decay = 1e-5
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")

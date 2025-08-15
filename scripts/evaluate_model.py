@@ -12,7 +12,7 @@ from torchvision import datasets, transforms
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import classification_report, confusion_matrix, f1_score, precision_score, recall_score
+from sklearn.metrics import classification_report, confusion_matrix, f1_score, precision_score, recall_score, accuracy_score
 import os
 from pathlib import Path
 import sys
@@ -41,6 +41,10 @@ def evaluate_model(model, test_loader, device):
     all_labels = []
     all_probabilities = []
     
+    # Track probabilities by class
+    london_on_probabilities = []
+    london_uk_probabilities = []
+    
     with torch.no_grad():
         for inputs, labels in test_loader:
             inputs, labels = inputs.to(device), labels.to(device)
@@ -48,11 +52,19 @@ def evaluate_model(model, test_loader, device):
             probabilities = torch.sigmoid(outputs)
             predictions = (probabilities > 0.5).float()
             
+            # Separate probabilities by true class
+            for i in range(len(labels)):
+                if labels[i].item() == 0:  # London_ON
+                    london_on_probabilities.append(probabilities[i].item())
+                else:  # London_UK
+                    london_uk_probabilities.append(probabilities[i].item())
+            
             all_predictions.extend(predictions.cpu().numpy())
             all_labels.extend(labels.cpu().numpy())
             all_probabilities.extend(probabilities.cpu().numpy())
     
-    return np.array(all_predictions), np.array(all_labels), np.array(all_probabilities)
+    return (np.array(all_predictions), np.array(all_labels), np.array(all_probabilities),
+            np.array(london_on_probabilities), np.array(london_uk_probabilities))
 
 def plot_confusion_matrix(y_true, y_pred, save_path="confusion_matrix.png"):
     """Plot and save confusion matrix."""
@@ -137,10 +149,10 @@ def main():
     
     # Evaluate model
     print("Evaluating model...")
-    predictions, true_labels, probabilities = evaluate_model(model, test_loader, device)
+    predictions, true_labels, probabilities, london_on_probs, london_uk_probs = evaluate_model(model, test_loader, device)
     
     # Calculate metrics
-    accuracy = np.mean(predictions == true_labels)
+    accuracy = accuracy_score(true_labels, predictions)
     
     # Calculate F1 scores
     f1_macro = f1_score(true_labels, predictions, average='macro')
@@ -151,7 +163,7 @@ def main():
     precision_macro = precision_score(true_labels, predictions, average='macro')
     recall_macro = recall_score(true_labels, predictions, average='macro')
     
-    print(f"\n=== MODEL PERFORMANCE METRICS ===")
+    print(f"\nMODEL PERFORMANCE METRICS")
     print(f"Overall Accuracy: {accuracy:.4f}")
     print(f"Macro F1 Score: {f1_macro:.4f}")
     print(f"Weighted F1 Score: {f1_weighted:.4f}")
@@ -162,8 +174,38 @@ def main():
     print(f"  London_ON: {f1_per_class[0]:.4f}")
     print(f"  London_UK: {f1_per_class[1]:.4f}")
     
+    # Probability analysis by city
+    print(f"\nPROBABILITY ANALYSIS BY CITY:")
+    print(f"London Ontario (True Class):")
+    print(f"  Average probability: {np.mean(london_on_probs):.4f}")
+    print(f"  Standard deviation: {np.std(london_on_probs):.4f}")
+    print(f"  Min probability: {np.min(london_on_probs):.4f}")
+    print(f"  Max probability: {np.max(london_on_probs):.4f}")
+    print(f"  High confidence (>0.8): {np.sum(london_on_probs > 0.8)}/{len(london_on_probs)} ({np.mean(london_on_probs > 0.8)*100:.1f}%)")
+    print(f"  Low confidence (<0.2): {np.sum(london_on_probs < 0.2)}/{len(london_on_probs)} ({np.mean(london_on_probs < 0.2)*100:.1f}%)")
+    
+    print(f"\nLondon UK (True Class):")
+    print(f"  Average probability: {np.mean(london_uk_probs):.4f}")
+    print(f"  Standard deviation: {np.std(london_uk_probs):.4f}")
+    print(f"  Min probability: {np.min(london_uk_probs):.4f}")
+    print(f"  Max probability: {np.max(london_uk_probs):.4f}")
+    print(f"  High confidence (>0.8): {np.sum(london_uk_probs > 0.8)}/{len(london_uk_probs)} ({np.mean(london_uk_probs > 0.8)*100:.1f}%)")
+    print(f"  Low confidence (<0.2): {np.sum(london_uk_probs < 0.2)}/{len(london_uk_probs)} ({np.mean(london_uk_probs < 0.2)*100:.1f}%)")
+    
+    print(f"\nProbability Separation:")
+    separation = np.mean(london_uk_probs) - np.mean(london_on_probs)
+    print(f"  Separation margin: {separation:.4f}")
+    if separation > 0.5:
+        print(f"  Status: Excellent separation!")
+    elif separation > 0.3:
+        print(f"  Status: Good separation!")
+    elif separation > 0.1:
+        print(f"  Status: Moderate separation")
+    else:
+        print(f"  Status: Poor separation")
+    
     # Classification report
-    print("\n=== DETAILED CLASSIFICATION REPORT ===")
+    print("\nDETAILED CLASSIFICATION REPORT")
     print(classification_report(true_labels, predictions, 
                               target_names=['London_ON', 'London_UK']))
     
@@ -181,7 +223,9 @@ def main():
         'recall_macro': recall_macro,
         'predictions': predictions,
         'true_labels': true_labels,
-        'probabilities': probabilities
+        'probabilities': probabilities,
+        'london_on_probabilities': london_on_probs,
+        'london_uk_probabilities': london_uk_probs
     }
     
     np.save('evaluation_results.npy', results)

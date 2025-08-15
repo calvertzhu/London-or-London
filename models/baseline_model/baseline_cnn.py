@@ -11,9 +11,9 @@ class BaselineCNN(nn.Module):
         
         # Convolutional layers
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(32)
         self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
-        
-        # Pooling
+        self.bn2 = nn.BatchNorm2d(64)
         self.pool = nn.MaxPool2d(2, 2)
         
         # Calculate the size after convolutions and pooling
@@ -22,34 +22,32 @@ class BaselineCNN(nn.Module):
         # After conv2 + pool: 56x56x64
         # Flattened: 56 * 56 * 64 = 200,704
         
-        # Dense layers
+        # Global Pooling to tiny head 
+        self.gap     = nn.AdaptiveAvgPool2d(1)  # (B,64,1,1)
         self.flatten = nn.Flatten()
-        self.fc1 = nn.Linear(56 * 56 * 64, 64)
-        self.dropout = nn.Dropout(0.5)
-        self.fc2 = nn.Linear(64, 1)
+        self.fc1     = nn.Linear(64, 64)
+        self.drop    = nn.Dropout(0.3)
+        self.fc2     = nn.Linear(64, 1)
         
         # Activation functions
-        self.relu = nn.ReLU()
-        self.sigmoid = nn.Sigmoid()
-        
+        self.relu = nn.ReLU(inplace= True)
+    
     def forward(self, x):
-        # Normalize pixel values (0-255 to 0-1)
-        x = x / 255.0
-        
+
         # First conv block
-        x = self.relu(self.conv1(x))
+        x = self.relu(self.bn1(self.conv1(x)))
         x = self.pool(x)
         
         # Second conv block
-        x = self.relu(self.conv2(x))
+        x = self.relu(self.bn2(self.conv2(x)))
         x = self.pool(x)
         
-        # Flatten and dense layers
-        x = self.flatten(x)
+        x = self.gap(x)         # (B,64,1,1)
+        x = self.flatten(x)     # (B,64)
         x = self.relu(self.fc1(x))
-        x = self.dropout(x)
-        x = self.fc2(x)
-        
+        x = self.drop(x)
+        x = self.fc2(x)         # (B,1) logit
         # Note: We don't apply sigmoid here because we'll use BCEWithLogitsLoss
         # which includes sigmoid internally
-        return x 
+
+        return x

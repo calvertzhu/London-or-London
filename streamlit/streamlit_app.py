@@ -16,7 +16,7 @@ import os
 from pathlib import Path
 
 # Add models to path
-sys.path.append('.')
+sys.path.append('..')
 from models.primary_model.resnet_cbam_mlp import ResNet50_CBAM_MLP
 
 # Page config
@@ -32,7 +32,7 @@ def load_model():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ResNet50_CBAM_MLP().to(device)
     
-    model_path = "scripts/trained_model.pth"
+    model_path = "../models/saved_models/best_model.pth"
     if os.path.exists(model_path):
         checkpoint = torch.load(model_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
@@ -53,6 +53,12 @@ def preprocess_image(image):
     # Convert to PIL if needed
     if isinstance(image, np.ndarray):
         image = Image.fromarray(image)
+    
+    # Convert RGBA to RGB if needed
+    if image.mode == 'RGBA':
+        image = image.convert('RGB')
+    elif image.mode != 'RGB':
+        image = image.convert('RGB')
     
     # Apply transforms
     image_tensor = transform(image).unsqueeze(0)
@@ -86,8 +92,8 @@ def main():
     st.sidebar.markdown("""
     This AI model distinguishes between Google Street View images from:
     
-    🇬🇧 **London, UK** - The capital of England
-    🇨🇦 **London, Ontario** - A city in Canada
+    **London, UK** - The capital of England
+    **London, Ontario** - A city in Canada
     
     The model was trained on thousands of street view images using a ResNet50 architecture with attention mechanisms.
     """)
@@ -119,7 +125,7 @@ def main():
         if image_file is not None:
             # Display uploaded image
             image = Image.open(image_file)
-            st.image(image, caption="Uploaded Image", use_column_width=True)
+            st.image(image, caption="Uploaded Image", use_container_width=True)
             
             # Preprocess image
             try:
@@ -130,13 +136,13 @@ def main():
                 
                 # Display results
                 with col2:
-                    st.header("🎯 Classification Results")
+                    st.header("Classification Results")
                     
                     # Prediction with confidence
                     if prediction == "London, UK":
-                        st.success(f"🇬🇧 **{prediction}**")
+                        st.success(f"**{prediction}**")
                     else:
-                        st.info(f"🇨🇦 **{prediction}**")
+                        st.info(f"**{prediction}**")
                     
                     # Confidence bar
                     st.metric("Confidence", f"{confidence:.1%}")
@@ -162,7 +168,7 @@ def main():
                     st.bar_chart(prob_data)
                     
                     # Interpretation
-                    st.subheader("💡 Interpretation")
+                    st.subheader("Interpretation")
                     if confidence > 0.8:
                         st.success("High confidence prediction - the model is very sure about this classification.")
                     elif confidence > 0.6:

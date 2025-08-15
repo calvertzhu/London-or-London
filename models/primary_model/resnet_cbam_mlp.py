@@ -53,13 +53,16 @@ class ResNet50_CBAM_MLP(nn.Module):
 
         self.cbam = CBAM(2048)
 
+        self.gap = nn.AdaptiveAvgPool2d(1)
+        self.gmp = nn.AdaptiveMaxPool2d(1)
+
         # Adaptive pooling to flatten to (batch, 2048, 1, 1)
         self.pool = nn.AdaptiveAvgPool2d(1)
 
         # MLP Head
         self.mlp_head = nn.Sequential(
-            nn.Flatten(),               # (batch, 2048)
-            nn.Linear(2048, 512),
+            nn.Flatten(),               # (B, 4096)
+            nn.Linear(4096, 512),
             nn.BatchNorm1d(512),
             nn.ReLU(),
             nn.Dropout(0.3),
@@ -69,13 +72,14 @@ class ResNet50_CBAM_MLP(nn.Module):
             nn.ReLU(),
             nn.Dropout(0.3),
 
-            nn.Linear(128, 1)           # single output for binary classification
-            # sigmoid is NOT here because we'll use BCEWithLogitsLoss which includes sigmoid
+            nn.Linear(128, 1)
         )
 
     def forward(self, x):
-        x = self.backbone(x)    # (batch, 2048, H, W)
-        x = self.cbam(x)         # apply CBAM attention
-        x = self.pool(x)         # (batch, 2048, 1, 1)
-        x = self.mlp_head(x)     # (batch, 1)
+        x = self.backbone(x)         # (B, 2048, H, W)
+        x = self.cbam(x)
+        xa = self.gap(x)             # (B, 2048, 1, 1)
+        xm = self.gmp(x)             # (B, 2048, 1, 1)
+        x = torch.cat([xa, xm], dim=1)  # (B, 4096, 1, 1)
+        x = self.mlp_head(x)
         return x
