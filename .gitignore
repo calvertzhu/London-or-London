@@ -22,3 +22,31 @@ google_maps_API.env
 
 # === Virtual environments ===
 aps360env/
+
+# === Model checkpoints and saved models ===
+*.pth
+*.pt
+*.ckpt
+*.h5
+*.pb
+checkpoints/
+checkpoints_baseline/
+models/saved_models/
+
+# === Training outputs ===
+*.png
+!metadata/*.png
+loss_curve.png
+accuracy_curve.png
+baseline_loss_curve.png
+baseline_accuracy_curve.png
+confusion_matrix.png
+roc_curve.png
+baseline_confusion_matrix.png
+baseline_roc_curve.png
+performance_metrics.png
+baseline_performance_metrics.png
+
+# === Evaluation results ===
+evaluation_results.npy
+baseline_evaluation_results.npy
