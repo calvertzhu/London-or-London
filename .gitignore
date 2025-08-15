@@ -50,3 +50,4 @@ baseline_performance_metrics.png
 # === Evaluation results ===
 evaluation_results.npy
 baseline_evaluation_results.npy
+models/saved_models/*.pth
