@@ -111,7 +111,7 @@ def main():
     
     # Create test dataset
     test_dataset = datasets.ImageFolder(root=test_data_dir, transform=transform)
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False, drop_last=False)
     
     print(f"Test dataset size: {len(test_dataset)}")
     print(f"Classes: {test_dataset.classes}")

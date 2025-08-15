@@ -14,7 +14,7 @@ from models.primary_model.resnet_cbam_mlp import ResNet50_CBAM_MLP
 # Configs
 data_dir = "report_data"
 batch_size = 16
-epochs = 10
+epochs = 30
 learning_rate = 0.001
 weight_decay = 1e-5
 
@@ -32,11 +32,24 @@ transform = transforms.Compose([
 train_dataset = datasets.ImageFolder(root=f"{data_dir}/train", transform=transform)
 val_dataset   = datasets.ImageFolder(root=f"{data_dir}/val", transform=transform)
 
-train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-
 print(f"Train dataset size: {len(train_dataset)}")
 print(f"Validation dataset size: {len(val_dataset)}")
+
+# Check if batch size is appropriate
+if batch_size > len(train_dataset):
+    print(f"Warning: batch_size ({batch_size}) > train dataset size ({len(train_dataset)})")
+    print("Reducing batch_size to train dataset size")
+    batch_size = len(train_dataset)
+elif batch_size > len(val_dataset):
+    print(f"Warning: batch_size ({batch_size}) > val dataset size ({len(val_dataset)})")
+    print("Reducing batch_size to val dataset size")
+    batch_size = len(val_dataset)
+
+print(f"Using batch_size: {batch_size}")
+
+# Create data loaders with drop_last=True to avoid batch norm issues
+train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, drop_last=True)
+val_loader   = DataLoader(val_dataset, batch_size=batch_size, shuffle=False, drop_last=True)
 
 # Model, loss, optimizer
 model = ResNet50_CBAM_MLP().to(device)
@@ -47,12 +60,42 @@ optimizer = optim.Adam(model.parameters(), lr=learning_rate, weight_decay=weight
 train_losses, val_losses = [], []
 train_accs, val_accs = [], []
 
+def load_checkpoint(model, optimizer, checkpoint_path):
+    """Load model and optimizer state from checkpoint"""
+    if checkpoint_path.exists():
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_epoch = checkpoint['epoch']
+        train_losses = checkpoint['train_losses']
+        val_losses = checkpoint['val_losses']
+        train_accs = checkpoint['train_accs']
+        val_accs = checkpoint['val_accs']
+        best_val_acc = checkpoint.get('best_val_acc', 0.0)
+        best_model_state = checkpoint.get('best_model_state', None)
+        print(f"Resumed from checkpoint: {checkpoint_path}")
+        print(f"   Starting from epoch: {start_epoch}")
+        print(f"   Best validation accuracy so far: {best_val_acc:.4f}")
+        return start_epoch, train_losses, val_losses, train_accs, val_accs, best_val_acc, best_model_state
+    return 0, [], [], [], [], 0.0, None
+
+# Checkpoint saving configuration
+save_every_n_epochs = 5  # Save checkpoint every 5 epochs
+checkpoint_dir = Path("checkpoints")
+checkpoint_dir.mkdir(exist_ok=True)
+
 # Best model tracking
 best_val_acc = 0.0
 best_model_state = None
 
+# Check for existing checkpoint to resume training
+resume_checkpoint = checkpoint_dir / "latest_checkpoint.pth"
+start_epoch, train_losses, val_losses, train_accs, val_accs, best_val_acc, best_model_state = load_checkpoint(
+    model, optimizer, resume_checkpoint
+)
+
 # Training loop
-for epoch in range(epochs):
+for epoch in range(start_epoch, epochs):
     model.train()
     running_loss, running_corrects = 0.0, 0
     for inputs, labels in train_loader:
@@ -102,6 +145,36 @@ for epoch in range(epochs):
         print(f"Epoch {epoch+1}/{epochs}: "
               f"Train Loss={epoch_loss:.4f}, Acc={epoch_acc:.4f} | "
               f"Val Loss={val_epoch_loss:.4f}, Acc={val_epoch_acc:.4f}")
+    
+    # Save intermediate checkpoint
+    if (epoch + 1) % save_every_n_epochs == 0:
+        checkpoint_path = checkpoint_dir / f"checkpoint_epoch_{epoch+1}.pth"
+        torch.save({
+            'epoch': epoch + 1,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'train_losses': train_losses,
+            'val_losses': val_losses,
+            'train_accs': train_accs,
+            'val_accs': val_accs,
+            'best_val_acc': best_val_acc,
+            'best_model_state': best_model_state,
+        }, checkpoint_path)
+        print(f"Checkpoint saved: {checkpoint_path}")
+        
+        # Also save as latest checkpoint for resuming
+        latest_checkpoint_path = checkpoint_dir / "latest_checkpoint.pth"
+        torch.save({
+            'epoch': epoch + 1,
+            'model_state_dict': model.state_dict(),
+            'optimizer_state_dict': optimizer.state_dict(),
+            'train_losses': train_losses,
+            'val_losses': val_losses,
+            'train_accs': train_accs,
+            'val_accs': val_accs,
+            'best_val_acc': best_val_acc,
+            'best_model_state': best_model_state,
+        }, latest_checkpoint_path)
 
 # Plot loss curve
 plt.figure(figsize=(8,5))
